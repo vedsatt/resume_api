@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"embed"
 	"fmt"
 
 	"fyne.io/fyne/v2"
@@ -12,22 +13,40 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+//go:embed icons/*
+var iconFS embed.FS
+
 var (
-	vkIcon     = loadIcon("vk.svg")
-	githubIcon = loadIcon("github.svg")
-	stepikIcon = loadIcon("stepik.svg")
+	vkIcon     fyne.Resource
+	githubIcon fyne.Resource
+	stepikIcon fyne.Resource
 )
 
-func loadIcon(name string) fyne.Resource {
-	data, err := fyne.LoadResourceFromPath("icons/" + name)
-	if err != nil {
-		fmt.Printf("Error loading icon: %v\n", err)
-		return theme.ErrorIcon()
-	}
-	return data
+type Tokens struct {
+	Vk     string
+	Github string
+	Stepik string
 }
 
-func Gui() []string {
+type gui struct{}
+
+func New() *gui {
+	vkIcon = loadIcon("icons/vk.svg")
+	githubIcon = loadIcon("icons/github.svg")
+	stepikIcon = loadIcon("icons/stepik.svg")
+	return &gui{}
+}
+
+func loadIcon(name string) fyne.Resource {
+	data, err := iconFS.ReadFile(name)
+	if err != nil {
+		fmt.Printf("Ошибка загрузки иконки: %v\n", err)
+		return theme.ErrorIcon()
+	}
+	return fyne.NewStaticResource(name, data)
+}
+
+func (g *gui) GetTokens() *Tokens {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Token Manager")
 	myWindow.Resize(fyne.NewSize(400, 300))
@@ -108,6 +127,9 @@ func Gui() []string {
 	myWindow.SetContent(content)
 	myWindow.ShowAndRun()
 
-	tokens := []string{vkToken, githubToken, stepikToken}
-	return tokens
+	return &Tokens{
+		Vk:     vkToken,
+		Github: githubToken,
+		Stepik: stepikToken,
+	}
 }

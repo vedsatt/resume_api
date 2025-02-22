@@ -1,113 +1,178 @@
-package gui
+package api
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"time"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
+	"git.miem.hse.ru/ps-biv24x/aisavelev.git/internal/gui"
 )
 
-var (
-	vkIcon     = loadIcon("vk.svg")
-	githubIcon = loadIcon("github.svg")
-	stepikIcon = loadIcon("stepik.svg")
-)
-
-func loadIcon(name string) fyne.Resource {
-	data, err := fyne.LoadResourceFromPath("icons/" + name)
-	if err != nil {
-		fmt.Printf("Error loading icon: %v\n", err)
-		return theme.ErrorIcon()
-	}
-	return data
+type api struct {
 }
 
-func Gui() []string {
-	myApp := app.New()
-	myWindow := myApp.NewWindow("Token Manager")
-	myWindow.Resize(fyne.NewSize(400, 300))
+func New() *api {
+	return &api{}
+}
 
-	var (
-		vkToken     string
-		githubToken string
-		stepikToken string
-	)
+const (
+	vkURLTemplate = "https://api.vk.com/method/users.get?fields=first_name,last_name&access_token=%s&v=5.131"
+	githubURL     = "https://api.github.com/user"
+	stepikURL     = "https://stepik.org/api/users/me"
+	outputFile    = "user_data.txt"
+)
 
-	header := container.NewCenter(
-		container.NewHBox(
-			widget.NewIcon(vkIcon),
-			widget.NewIcon(githubIcon),
-			widget.NewIcon(stepikIcon),
-			widget.NewLabel("Получение данных по токенам"),
-		),
-	)
+type VKResponse struct {
+	Response []struct {
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+	} `json:"response"`
+}
 
-	createInputField := func(icon fyne.Resource, labelText string) (*widget.Entry, fyne.CanvasObject) {
-		entry := widget.NewPasswordEntry()
-		entry.SetPlaceHolder("Введите токен...")
-		entry.Validator = func(s string) error {
-			if len(s) < 10 {
-				return fmt.Errorf("минимум 10 символов")
-			}
-			return nil
-		}
+type GitHubResponse struct {
+	Login string `json:"login"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
 
-		return entry, container.NewBorder(
-			nil,
-			widget.NewSeparator(),
-			container.NewHBox(
-				widget.NewIcon(icon),
-				widget.NewLabel(labelText),
-				layout.NewSpacer(),
-			),
-			nil,
-			entry,
-		)
+type StepikResponse struct {
+	Users []struct {
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+	} `json:"users"`
+}
+
+type UserData struct {
+	VK     string `json:"vk"`
+	GitHub string `json:"github"`
+	Stepik string `json:"stepik"`
+}
+
+func (a *api) GetInfo() {
+	gui := gui.New()
+
+	tokens := gui.GetTokens()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	vkURL := fmt.Sprintf(vkURLTemplate, tokens.Vk)
+	vkJson, err := makeVKRequest(ctx, vkURL)
+	if err != nil {
+		log.Printf("Ошибка VK: %s", err)
 	}
 
-	vkEntry, vkBox := createInputField(vkIcon, "VK:")
-	githubEntry, githubBox := createInputField(githubIcon, "GitHub:")
-	stepikEntry, stepikBox := createInputField(stepikIcon, "Stepik:")
+	githubJson, err := MakeRequest(ctx, tokens.Github, githubURL)
+	if err != nil {
+		log.Printf("Ошибка GitHub: %s", err)
+	}
 
-	saveBtn := widget.NewButtonWithIcon("Сохранить", theme.DocumentSaveIcon(), func() {
-		if err := vkEntry.Validate(); err != nil {
-			dialog.ShowError(err, myWindow)
-			return
-		}
-		if err := githubEntry.Validate(); err != nil {
-			dialog.ShowError(err, myWindow)
-			return
-		}
-		if err := stepikEntry.Validate(); err != nil {
-			dialog.ShowError(err, myWindow)
-			return
-		}
+	stepikJson, err := MakeRequest(ctx, tokens.Stepik, stepikURL)
+	if err != nil {
+		log.Printf("Ошибка Stepik: %s", err)
+	}
 
-		vkToken = vkEntry.Text
-		githubToken = githubEntry.Text
-		stepikToken = stepikEntry.Text
+	var vkData VKResponse
+	if err := json.Unmarshal(vkJson, &vkData); err != nil {
+		log.Printf("Ошибка парсинга VK: %s", err)
+	} else if len(vkData.Response) == 0 {
+		log.Printf("VK API вернул пустой ответ")
+	}
 
-		dialog.ShowInformation("Успех!", "Токены сохранены", myWindow)
-	})
+	var githubData GitHubResponse
+	if err := json.Unmarshal(githubJson, &githubData); err != nil {
+		log.Printf("Ошибка парсинга GitHub: %s", err)
+	}
 
-	content := container.NewVBox(
-		header,
-		layout.NewSpacer(),
-		vkBox,
-		githubBox,
-		stepikBox,
-		layout.NewSpacer(),
-		container.NewCenter(saveBtn),
-	)
+	var stepikData StepikResponse
+	if err := json.Unmarshal(stepikJson, &stepikData); err != nil {
+		log.Printf("Ошибка парсинга Stepik: %s", err)
+	}
 
-	myWindow.SetContent(content)
-	myWindow.ShowAndRun()
+	userData := UserData{
+		VK:     fmt.Sprintf("%s %s", vkData.Response[0].FirstName, vkData.Response[0].LastName),
+		GitHub: githubData.Login,
+		Stepik: fmt.Sprintf("%s %s", stepikData.Users[0].FirstName, stepikData.Users[0].LastName),
+	}
 
-	tokens := []string{vkToken, githubToken, stepikToken}
-	return tokens
+	if err := saveToFile(userData); err != nil {
+		log.Printf("Ошибка сохранения данных в файл: %s", err)
+	} else {
+		fmt.Println("Данные успешно сохранены в файл:", outputFile)
+	}
+}
+
+func makeVKRequest(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при создании запроса: %w", err)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при выполнении запроса: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("VK API вернул статус %d, ответ: %s", resp.StatusCode, string(body))
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при чтении ответа: %w", err)
+	}
+
+	return data, nil
+}
+
+func MakeRequest(ctx context.Context, token, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при создании запроса: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при выполнении запроса: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("API вернул статус %d, ответ: %s", resp.StatusCode, string(body))
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при чтении ответа: %w", err)
+	}
+
+	return data, nil
+}
+
+func saveToFile(data UserData) error {
+	file, err := os.Create(outputFile)
+	if err != nil {
+		return fmt.Errorf("ошибка при создании файла: %w", err)
+	}
+	defer file.Close()
+
+	content := fmt.Sprintf("VK: %s\nGitHub: %s\nStepik: %s\n", data.VK, data.GitHub, data.Stepik)
+
+	if _, err := file.WriteString(content); err != nil {
+		return fmt.Errorf("ошибка при записи данных в файл: %w", err)
+	}
+
+	return nil
 }
