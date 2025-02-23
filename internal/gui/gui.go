@@ -3,6 +3,7 @@ package gui
 import (
 	"embed"
 	"fmt"
+	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -23,9 +24,10 @@ var (
 )
 
 type Tokens struct {
-	Vk     string
-	Github string
-	Stepik string
+	Vk       string
+	Github   string
+	Stepik   string
+	StepikID int
 }
 
 type gui struct{}
@@ -55,6 +57,7 @@ func (g *gui) GetTokens() *Tokens {
 		vkToken     string
 		githubToken string
 		stepikToken string
+		stepikID    string
 	)
 
 	header := container.NewCenter(
@@ -66,14 +69,20 @@ func (g *gui) GetTokens() *Tokens {
 		),
 	)
 
-	createInputField := func(icon fyne.Resource, labelText string) (*widget.Entry, fyne.CanvasObject) {
-		entry := widget.NewPasswordEntry()
-		entry.SetPlaceHolder("Введите токен...")
-		entry.Validator = func(s string) error {
-			if len(s) < 10 {
-				return fmt.Errorf("минимум 10 символов")
+	createInputField := func(icon fyne.Resource, labelText string, isPassword bool) (*widget.Entry, fyne.CanvasObject) {
+		var entry *widget.Entry
+		if isPassword {
+			entry = widget.NewPasswordEntry()
+			entry.SetPlaceHolder("Введите токен...")
+			entry.Validator = func(s string) error {
+				if len(s) < 10 {
+					return fmt.Errorf("минимум 10 символов")
+				}
+				return nil
 			}
-			return nil
+		} else {
+			entry = widget.NewEntry()
+			entry.SetPlaceHolder("Введите логин...")
 		}
 
 		return entry, container.NewBorder(
@@ -89,9 +98,10 @@ func (g *gui) GetTokens() *Tokens {
 		)
 	}
 
-	vkEntry, vkBox := createInputField(vkIcon, "VK:")
-	githubEntry, githubBox := createInputField(githubIcon, "GitHub:")
-	stepikEntry, stepikBox := createInputField(stepikIcon, "Stepik:")
+	vkEntry, vkBox := createInputField(vkIcon, "VK:", true)
+	githubEntry, githubBox := createInputField(githubIcon, "GitHub:", true)
+	stepikEntry, stepikBox := createInputField(stepikIcon, "Stepik Token:", true)
+	stepikIDEntry, stepikIDBox := createInputField(stepikIcon, "Stepik ID:", false)
 
 	saveBtn := widget.NewButtonWithIcon("Сохранить", theme.DocumentSaveIcon(), func() {
 		if err := vkEntry.Validate(); err != nil {
@@ -110,8 +120,9 @@ func (g *gui) GetTokens() *Tokens {
 		vkToken = vkEntry.Text
 		githubToken = githubEntry.Text
 		stepikToken = stepikEntry.Text
+		stepikID = stepikIDEntry.Text
 
-		dialog.ShowInformation("Успех!", "Токены сохранены", myWindow)
+		dialog.ShowInformation("Успех!", "Токены и логин сохранены", myWindow)
 	})
 
 	content := container.NewVBox(
@@ -120,6 +131,7 @@ func (g *gui) GetTokens() *Tokens {
 		vkBox,
 		githubBox,
 		stepikBox,
+		stepikIDBox,
 		layout.NewSpacer(),
 		container.NewCenter(saveBtn),
 	)
@@ -127,9 +139,11 @@ func (g *gui) GetTokens() *Tokens {
 	myWindow.SetContent(content)
 	myWindow.ShowAndRun()
 
+	stepikIDint, _ := strconv.Atoi(stepikID)
 	return &Tokens{
-		Vk:     vkToken,
-		Github: githubToken,
-		Stepik: stepikToken,
+		Vk:       vkToken,
+		Github:   githubToken,
+		Stepik:   stepikToken,
+		StepikID: stepikIDint,
 	}
 }
