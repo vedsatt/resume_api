@@ -12,6 +12,13 @@ import (
 	"git.miem.hse.ru/ps-biv24x/aisavelev.git/internal/servers/vk"
 )
 
+type App struct {
+}
+
+func New() *App {
+	return &App{}
+}
+
 func dataToFile(v *vk.UserData, g *github.GithubData, s *stepik.StepikData) {
 	filePath := filepath.Join("output", "data.txt")
 
@@ -32,7 +39,7 @@ func dataToFile(v *vk.UserData, g *github.GithubData, s *stepik.StepikData) {
 	}
 }
 
-func GetInfo() {
+func (a *App) GetInfo() {
 	g := gui.New()
 	tokens := g.GetTokens()
 
