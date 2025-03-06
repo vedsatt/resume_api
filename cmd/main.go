@@ -1,11 +1,11 @@
 package main
 
 import (
-	"git.miem.hse.ru/ps-biv24x/aisavelev.git/internal/api"
+	"git.miem.hse.ru/ps-biv24x/aisavelev.git/internal/server"
 )
 
 func main() {
-	app := api.New()
+	app := server.New()
 
 	app.GetInfo()
 }

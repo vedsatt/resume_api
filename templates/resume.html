@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Резюме</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f0f2f5;
+            color: #242526;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .resume-container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            width: 100%;
+        }
+
+        h1 {
+            color: #1877f2;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: #1877f2;
+            margin: 1rem auto 0;
+            border-radius: 2px;
+        }
+
+        .name {
+            font-size: 2rem;
+            color: #1c1e21;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            color: #1877f2;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+
+        .section-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            background: #1877f2;
+            border-radius: 50%;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-left: 1.8rem;
+            position: relative;
+        }
+
+        .info-item i {
+            color: #606770;
+            position: absolute;
+            left: 0;
+            font-size: 1.1rem;
+        }
+
+        .stat-item {
+            background: #e9f5ff;
+            border: 2px solid #b0d9ff;
+            color: #1877f2;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            margin: 0.75rem 0;
+        }
+
+        .stat-item h3 {
+            font-size: 2rem;
+            margin: 0 0 0.5rem;
+            color: #1877f2;
+        }
+
+        .contact-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .contact-link {
+            background: #1877f2;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .contact-link:hover {
+            background: #1564c4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(24, 119, 242, 0.3);
+        }
+
+        @media (max-width: 600px) {
+            .contact-links {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="resume-container">
+        <h1>Резюме</h1>
+        <div class="name">{{.FirstName}} {{.LastName}}</div>
+        
+        <div class="section">
+            <div class="section-title">Основное</div>
+            <div class="info-item">
+                <i class="fas fa-user"></i>
+                <div>
+                    <strong>Возраст:</strong> {{.Age}} лет
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Контакты</div>
+            <div class="info-item">
+                <i class="fas fa-envelope"></i>
+                <div>{{.Email}}</div>
+            </div>
+            <div class="info-item">
+                <i class="fab fa-github"></i>
+                <div>{{.GitHubLogin}}</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Достижения</div>
+            <div class="stat-item">
+                <h3>{{.Certificates}}</h3>
+                <div>Сертификатов на Степике</div>
+            </div>
+        </div>
+
+        <div class="contact-links">
+            <a href="mailto:{{.Email}}" class="contact-link">Написать письмо</a>
+            <a href="https://github.com/{{.GitHubLogin}}" target="_blank" class="contact-link">GitHub</a>
+        </div>
+    </div>
+</body>
+</html>
