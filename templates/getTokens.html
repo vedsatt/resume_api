@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Введите данные</title>
+<style>
+body {
+font-family: 'Roboto', sans-serif;
+background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+margin: 0;
+min-height: 100vh;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+.container {
+background: white;
+padding: 40px 25px;
+border-radius: 15px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+max-width: 500px;
+width: 100%;
+}
+
+h1 {
+color: #2c3e50;
+text-align: center;
+margin-bottom: 30px;
+font-size: 2.5em;
+text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.form-group {
+margin-bottom: 25px;
+}
+
+label {
+display: block;
+margin-bottom: 8px;
+color: #34495e;
+font-weight: 500;
+}
+
+input[type="text"] {
+width: calc(108% - 40px);
+padding: 12px 20px;
+border: 2px solid #bdc3c7;
+border-radius: 8px;
+font-size: 16px;
+transition: all 0.3s ease;
+box-sizing: border-box;
+}
+
+input:focus {
+border-color: #3498db;
+box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+outline: none;
+}
+
+button {
+background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+color: white;
+padding: 15px 30px;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+font-size: 18px;
+font-weight: 600;
+width: 100%;
+margin-top: 20px;
+transition: transform 0.2s ease;
+}
+
+button:hover {
+transform: translateY(-2px);
+box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+}
+
+</style></head>
+<body>
+<div class="container">
+<h1>Введите ваши данные</h1>
+<form action="/submit" method="POST">
+<div class="form-group">
+<label for="token1">Токен Vk</label>
+<input type="text" id="token1" name="token1" required placeholder="Введите ваш VK токен">
+</div>
+
+<div class="form-group">
+<label for="token2">Токен GitHub</label>
+<input type="text" id="token2" name="token2" required placeholder="Введите ваш GitHub токен">
+</div>
+
+<div class="form-group">
+<label for="token3">Токен Stepik</label>
+<input type="text" id="token3" name="token3" required placeholder="Введите ваш Stepik токен">
+</div>
+
+<div class="form-group">
+<label for="login">ID пользователя Stepik</label>
+<input type="text" id="login" name="login" required placeholder="Введите ваш Stepik ID">
+</div>
+
+<button type="submit">Подтвердить токены</button>
+</form>
+</div></body>
+</html>
